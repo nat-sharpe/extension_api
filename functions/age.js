@@ -1,4 +1,17 @@
 exports.handler = function(event, context, callback) {
+  const headers = {
+    "Access-Control-Allow-Origin" : "*",
+    "Access-Control-Allow-Headers": "Content-Type"
+  };
+
+  if (event.httpMethod !== "POST") {
+    return {
+      statusCode: 200, // <-- Important!
+      headers,
+      body: "This was not a POST request!"
+    };
+  }
+
   const decodeBase64 = rawCode => {
     const base64 = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-~";
     const answer = [];
@@ -62,6 +75,7 @@ exports.handler = function(event, context, callback) {
     const datedItems = netlifyDates(items);
     callback(null, {
       statusCode: 200,
+      headers,
       body: JSON.stringify({ datedItems }),
     });
   } else {
