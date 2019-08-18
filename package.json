@@ -1,0 +1,11 @@
+{
+  "name": "ex-api",
+  "version": "1.0.0",
+  "dependencies": {
+    "netlify-lambda": "^1.6.2"
+  },
+  "scripts": {
+    "start:lambda": "netlify-lambda serve functions",
+    "build:lambda": "netlify-lambda build functions"
+  }
+}
