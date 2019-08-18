@@ -1,5 +1,4 @@
 exports.handler = function(event, context, callback) {
-  console.log("event ", event);
   const headers = {
     "Access-Control-Allow-Origin" : "*",
     "Access-Control-Allow-Headers": "Content-Type"
@@ -63,30 +62,41 @@ exports.handler = function(event, context, callback) {
     return datedItems;
   }
 
-  const items = JSON.parse(event.body);
-  if (event.httpMethod !== "POST") {
+  if (event.httpMethod === "OPTIONS") {
     callback(null, {
       statusCode: 200,
-        headers,
-        body: "This was not a POST request!"
-    });
-  }
-  else if (Object.keys(items).length > 0) {
-    const datedItems = netlifyDates(items);  
-    callback(null, {
-      statusCode: 200,
-      headers,
-      body: JSON.stringify({ datedItems }),
-    });
-  } else {
-    callback(null, {
-      statusCode: 424,
       headers,
       body: JSON.stringify({
-        status: "failed",
-        message: "Badness happened!"
+        status: "success",
+        message: "Connected!"
       })
     });
   }
+  else if (event.httpMethod === "POST") {
+    const items = JSON.parse(event.body);
+    if (Object.keys(items).length > 0) {
+      const datedItems = netlifyDates(items);  
+      callback(null, {
+        statusCode: 200,
+        headers,
+        body: JSON.stringify({ datedItems }),
+      });
+    } else {
+      callback(null, {
+        statusCode: 424,
+        headers,
+        body: JSON.stringify({
+          status: "failed",
+          message: "Badness happened!"
+        })
+      });
+    }
+  }
+  else {
+  callback(null, {
+    statusCode: 200,
+    body: "This was not a POST request!"
+  });
+}
 }
 
