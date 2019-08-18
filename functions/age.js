@@ -1,16 +1,9 @@
 exports.handler = function(event, context, callback) {
+  console.log("event ", event);
   const headers = {
     "Access-Control-Allow-Origin" : "*",
     "Access-Control-Allow-Headers": "Content-Type"
   };
-
-  if (event.httpMethod !== "POST") {
-    return {
-      statusCode: 200, // <-- Important!
-      headers,
-      body: "This was not a POST request!"
-    };
-  }
 
   const decodeBase64 = rawCode => {
     const base64 = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-~";
@@ -71,14 +64,29 @@ exports.handler = function(event, context, callback) {
   }
 
   const items = JSON.parse(event.body);
-  if (Object.keys(items).length > 1) {
-    const datedItems = netlifyDates(items);
+  if (event.httpMethod !== "POST") {
+    callback(null, {
+      statusCode: 200,
+        headers,
+        body: "This was not a POST request!"
+    });
+  }
+  else if (Object.keys(items).length > 0) {
+    const datedItems = netlifyDates(items);  
     callback(null, {
       statusCode: 200,
       headers,
       body: JSON.stringify({ datedItems }),
     });
   } else {
-    callback(new Error("Received wrong input"));
+    callback(null, {
+      statusCode: 424,
+      headers,
+      body: JSON.stringify({
+        status: "failed",
+        message: "Badness happened!"
+      })
+    });
   }
 }
+
