@@ -50,14 +50,21 @@ exports.handler = function(event, context, callback) {
   const netlifyDates = items => {
     const datedItems = {};
     Object.keys(items).forEach(item => {
-      const imgUrl = items[item].imgUrl;
-      const splitUrl = imgUrl.split('/');
-      const beforeIndex = splitUrl.indexOf('g');
-      const imageId = splitUrl.slice(beforeIndex+1, beforeIndex+2)[0];
-      const base64Code = imageId.slice(imageId.length - 5, imageId.length);
-      const timeCode = decodeBase64(base64Code);
-      age = calculateAge(timeCode);
-      datedItems[item] = age;
+      if (items[item].imgUrl) {
+        const imgUrl = items[item].imgUrl;
+        const splitUrl = imgUrl.split('/');
+        const beforeIndex = splitUrl.indexOf('g');
+        const imageId = splitUrl.slice(beforeIndex+1, beforeIndex+2)[0];
+        const base64Code = imageId.slice(imageId.length - 5, imageId.length);
+        const timeCode = decodeBase64(base64Code);
+        const age = calculateAge(timeCode);
+        datedItems[item] = age;
+      } else {
+        // if no image url
+        datedItems[item] = {
+          minutes: -1,
+        }
+      }
     });
     return datedItems;
   }
@@ -100,3 +107,31 @@ exports.handler = function(event, context, callback) {
 }
 }
 
+// // ERROR HANDLING EXAMPLE
+// try {
+//   charge = await stripe.charges.create(
+//     {
+//       currency: "usd",
+//       amount: data.amount,
+//       source: data.token.id,
+//       receipt_email: data.token.email,
+//       description: `charge for a widget`
+//     },
+//     {
+//       idempotency_key: data.idempotency_key
+//     }
+//   );
+// } catch (e) {
+//   let message = e.message;
+
+//   console.error(message);
+
+//   return {
+//     statusCode: 424,
+//     headers,
+//     body: JSON.stringify({
+//       status: "failed",
+//       message
+//     })
+//   };
+// }
