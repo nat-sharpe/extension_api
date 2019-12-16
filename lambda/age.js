@@ -1,1 +1,126 @@
-!function(e,t){for(var n in t)e[n]=t[n]}(exports,function(e){var t={};function n(r){if(t[r])return t[r].exports;var o=t[r]={i:r,l:!1,exports:{}};return e[r].call(o.exports,o,o.exports,n),o.l=!0,o.exports}return n.m=e,n.c=t,n.d=function(e,t,r){n.o(e,t)||Object.defineProperty(e,t,{enumerable:!0,get:r})},n.r=function(e){"undefined"!=typeof Symbol&&Symbol.toStringTag&&Object.defineProperty(e,Symbol.toStringTag,{value:"Module"}),Object.defineProperty(e,"__esModule",{value:!0})},n.t=function(e,t){if(1&t&&(e=n(e)),8&t)return e;if(4&t&&"object"==typeof e&&e&&e.__esModule)return e;var r=Object.create(null);if(n.r(r),Object.defineProperty(r,"default",{enumerable:!0,value:e}),2&t&&"string"!=typeof e)for(var o in e)n.d(r,o,function(t){return e[t]}.bind(null,o));return r},n.n=function(e){var t=e&&e.__esModule?function(){return e.default}:function(){return e};return n.d(t,"a",t),t},n.o=function(e,t){return Object.prototype.hasOwnProperty.call(e,t)},n.p="",n(n.s=0)}([function(e,t){t.handler=function(e,t){const n={"Access-Control-Allow-Origin":"*","Access-Control-Allow-Headers":"Content-Type"},r=e=>{const t=(Math.floor(Date.now()/1e3)-(1073741818+(e=>{const t=e.map((t,n)=>{const r=e.length-n-1;return t*(n<e.length?Math.pow(64,r):t)});let n=0;return t.forEach(e=>{n+=e}),n})(e)))/60,n=t/60,r=n/24;return{minutes:Math.floor(t),hours:Math.floor(n),days:Math.floor(r)}},o=e=>{const t={};return Object.keys(e).forEach(n=>{if(e[n].imgUrl){const o=e[n].imgUrl.split("/"),s=o.indexOf("g"),l=o.slice(s+1,s+2)[0],u=(e=>{const t=[];return stringChars=e.split(""),stringChars.forEach(e=>{var n="ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-~".indexOf(e);t.push(n)}),t})(l.slice(l.length-5,l.length)),i=r(u);t[n]=i}else t[n]={minutes:-1}}),t};if("OPTIONS"===e.httpMethod)t(null,{statusCode:200,headers:n,body:JSON.stringify({status:"success",message:"Connected!"})});else if("POST"===e.httpMethod){const r=JSON.parse(e.body);if(Object.keys(r).length>0){const e=o(r);t(null,{statusCode:200,headers:n,body:JSON.stringify({datedItems:e})})}else t(null,{statusCode:424,headers:n,body:JSON.stringify({status:"failed",message:"Badness happened!"})})}else t(null,{statusCode:200,body:"This was not a POST request!"})}}]));
+exports.handler = function(event, callback) {
+  const headers = {
+    "Access-Control-Allow-Origin" : "*",
+    "Access-Control-Allow-Headers": "Content-Type"
+  };
+
+  const decodeBase64 = rawCode => {
+    // rawCode = civ3e
+    const ebayBase64 = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-~";
+    const answer = [];
+    stringChars = rawCode.split(''); // ["c", "i", "v", "3", "e"]
+    stringChars.forEach(char => {
+      var value = ebayBase64.indexOf(char); // 28, 34, 47, 55, 30
+      answer.push(value);
+    });
+    return answer; // [28, 34, 47, 55, 30]
+  };
+  
+  const getTime = (arr) => {
+    // arr = [28, 34, 47, 55, 30]
+    const newArr = arr.map((column, index) => {
+      // column = 28, 34, 47, 55, 30
+      const power = arr.length - index - 1; 
+      // power = 4, 3, 2, 1, 0
+      const multiplier = index < arr.length ? Math.pow(64, power) : column;
+      // multiplier = 16777216, 262144, 4096, 64, 1
+      return column * multiplier;
+    })
+    // newArr = [469762048, 8912896, 192512, 3520, 30];
+    let totalSeconds = 0;
+    newArr.forEach(segment => {
+      totalSeconds+= segment;
+    })
+    return totalSeconds; // 478,871,006
+
+    // Note: actual Base64 encoding would turn 478871006 into "NDc4ODcxMDA2"
+    // By using a base 64 numeral system, eBay can reduce that same number to just "civ3e"
+  };					
+  
+  const calculateAge = timeCode => {
+    const nowEpoch = Math.floor(Date.now() / 1000); // 1,572,580,928 (11/01/2019)
+    const ebayEpoch = 1073741818; // The epoch time (seconds from 01/01/1970) when Ebay time began: ~ 01/10/2004 @ 1:36pm (UTC)
+    const itemTime = getTime(timeCode); // The Ebay time when item's thumbnail image was uploaded: 478,871,006 seconds from 01/10/2004
+    const itemEpoch = ebayEpoch + itemTime; // 1,073,741,818 + 478,871,006 = 1,552,612,824
+
+    const ageInSeconds = nowEpoch - itemEpoch; // 1,572,580,928 - 1,552,612,824 = 19,968,104 seconds
+    const ageInMinutes = ageInSeconds / 60; // 332,801 minutes
+    const ageInHours = ageInMinutes / 60; // 5546 hours
+    const ageInDays = ageInHours / 24; // 92 days
+  
+    const age = {
+      minutes: Math.floor(ageInMinutes),
+      hours: Math.floor(ageInHours),
+      days: Math.floor(ageInDays),
+    }
+    return age;
+  };
+  
+  const translateDateCodes = items => {
+    const datedItems = {};
+    Object.keys(items).forEach(item => {
+      if (items[item].imgUrl) {
+        const imgUrl = items[item].imgUrl;
+        // imgUrl = https://i.ebayimg.com/images/g/UrMAAOSwrYRciv3e/s-l1600.jpg
+        const splitUrl = imgUrl.split('/');
+        const beforeIndex = splitUrl.indexOf('g');
+        const imageId = splitUrl.slice(beforeIndex+1, beforeIndex+2)[0];
+        // imageId = UrMAAOSwrYRciv3e
+        const base64Code = imageId.slice(imageId.length - 5, imageId.length);
+        // base64Code = civ3e
+        const timeCode = decodeBase64(base64Code);
+        // timeCode = [28, 34, 47, 55, 30]
+        const age = calculateAge(timeCode);
+        // age = {
+        //   minutes: 332801,
+        //   hours: 5546,
+        //   days: 92,
+        // }
+        datedItems[item] = age;
+      } else {
+        // if no image url
+        datedItems[item] = {
+          minutes: -1,
+        }
+      }
+    });
+    return datedItems;
+  }
+
+  if (event.httpMethod === "OPTIONS") {
+    callback(null, {
+      statusCode: 200,
+      headers,
+      body: JSON.stringify({
+        status: "success",
+        message: "Connected!"
+      })
+    });
+  }
+  else if (event.httpMethod === "POST") {
+    const items = JSON.parse(event.body);
+    if (Object.keys(items).length > 0) {
+      const datedItems = translateDateCodes(items);  
+      callback(null, {
+        statusCode: 200,
+        headers,
+        body: JSON.stringify({ datedItems }),
+      });
+    } else {
+      callback(null, {
+        statusCode: 424,
+        headers,
+        body: JSON.stringify({
+          status: "failed",
+          message: "Badness happened!"
+        })
+      });
+    }
+  }
+  else {
+  callback(null, {
+    statusCode: 200,
+    body: "This was not a POST request!"
+  });
+}
+}
