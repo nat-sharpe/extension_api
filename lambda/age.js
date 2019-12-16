@@ -1,4 +1,6 @@
 exports.handler = function(event, callback) {
+  console.log("event", event)
+  console.log("callback", callback)
   const headers = {
     "Access-Control-Allow-Origin" : "*",
     "Access-Control-Allow-Headers": "Content-Type"
