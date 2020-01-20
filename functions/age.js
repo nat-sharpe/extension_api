@@ -52,6 +52,7 @@ exports.handler = function(event, context, callback) {
       minutes: Math.floor(ageInMinutes),
       hours: Math.floor(ageInHours),
       days: Math.floor(ageInDays),
+      uploadDate: itemEpoch,
     }
     return age;
   };
